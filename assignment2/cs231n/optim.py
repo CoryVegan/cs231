@@ -65,7 +65,10 @@ def sgd_momentum(w, dw, config=None):
   # TODO: Implement the momentum update formula. Store the updated value in   #
   # the next_w variable. You should also use and update the velocity v.       #
   #############################################################################
-  v = config['momentum'] * v - config['learning_rate'] * dw
+  m = config['momentum']
+  lr = config['learning_rate']
+
+  v = m * v - lr * dw
   next_w = w + v
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -102,11 +105,11 @@ def rmsprop(x, dx, config=None):
   #############################################################################
   cache = config['cache']
   eps = config['epsilon']
-  decay_rate = config['decay_rate']
-  learning_rate = config['learning_rate']
+  dr = config['decay_rate']
+  lr = config['learning_rate']
 
-  cache = decay_rate * cache + (1 - decay_rate) * dx**2
-  next_x = x - learning_rate * dx / (np.sqrt(cache) + eps)
+  cache = dr * cache + (1 - dr) * dx**2
+  next_x = x - lr * dx / (np.sqrt(cache) + eps)
 
   config['cache'] = cache
   #############################################################################
@@ -145,7 +148,7 @@ def adam(x, dx, config=None):
   # the next_x variable. Don't forget to update the m, v, and t variables     #
   # stored in config.                                                         #
   #############################################################################
-  learning_rate = config['learning_rate']
+  lr = config['learning_rate']
   beta1 = config['beta1']
   beta2 = config['beta2']
   eps = config['epsilon']
@@ -154,11 +157,14 @@ def adam(x, dx, config=None):
   t = config['t']
 
   t += 1
+
   m = beta1 * m + (1 -  beta1) * dx
-  mb = m / (1 - beta1**t)
   v = beta2 * v + (1 - beta2) * dx**2
+
+  mb = m / (1 - beta1**t)
   vb = v / (1 - beta2**t)
-  next_x = x - learning_rate * mb / (np.sqrt(vb) + eps)
+
+  next_x = x - lr * mb / (np.sqrt(vb) + eps)
 
   config['m'] = m
   config['v'] = v
