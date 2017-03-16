@@ -309,11 +309,11 @@ def batchnorm_backward_alt(dout, cache):
   var = sample_var + eps
   ivar = 1. / np.sqrt(var)
   xmu = x - sample_mean
-  dsig = np.sum(dx_norm * xmu * -0.5 * var**-1.5, axis=0)
+  dvar = np.sum(dx_norm * xmu * -0.5 * var**-1.5, axis=0)
 
-  dmu = np.sum(dx_norm * -ivar, axis=0) + dsig * np.sum(-2 * xmu, axis=0) / N
+  dmean = np.sum(dx_norm * -ivar, axis=0) + dvar * np.sum(-2 * xmu, axis=0) / N
 
-  dx = dx_norm * ivar + dsig * 2 * xmu / N + dmu / N
+  dx = dx_norm * ivar + dvar * 2 * xmu / N + dmean / N
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
