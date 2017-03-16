@@ -615,11 +615,18 @@ def softmax_loss(x, y):
   - loss: Scalar giving the loss
   - dx: Gradient of the loss with respect to x
   """
+  # prevent numerical instability as noted in
+  # http://cs231n.github.io/linear-classify/#softmax
   probs = np.exp(x - np.max(x, axis=1, keepdims=True))
   probs /= np.sum(probs, axis=1, keepdims=True)
+
+  # 'smoothing' factor to prevent 'Divide by zero in log' error
+  smooth_factor = 1e-14
   N = x.shape[0]
-  loss = -np.sum(np.log(probs[np.arange(N), y])) / N
+  loss = -np.sum(np.log(probs[np.arange(N), y] + smooth_factor)) / N
+
   dx = probs.copy()
   dx[np.arange(N), y] -= 1
   dx /= N
+
   return loss, dx
