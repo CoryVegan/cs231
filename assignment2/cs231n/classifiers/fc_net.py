@@ -187,12 +187,13 @@ class FullyConnectedNet(object):
       self.params['W' + str(i)] = W
       self.params['b' + str(i)] = b
 
-      if i < self.num_layers and self.use_batchnorm:
-        gamma = np.ones(layer_dims[i])
-        beta = np.zeros(layer_dims[i])
+      if is_hidden_layer(i, self.num_layers):
+        if self.use_batchnorm:
+          gamma = np.ones(layer_dims[i])
+          beta = np.zeros(layer_dims[i])
 
-        self.params['gamma' + str(i)] = gamma
-        self.params['beta' + str(i)] = beta
+          self.params['gamma' + str(i)] = gamma
+          self.params['beta' + str(i)] = beta
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -257,14 +258,17 @@ class FullyConnectedNet(object):
       W = self.params['W' + str(i)]
       b = self.params['b' + str(i)]
 
-      if i < self.num_layers and self.use_batchnorm:
-        gamma = self.params['gamma' + str(i)]
-        beta = self.params['beta' + str(i)]
-        bn_p = self.bn_params[i - 1]
+      if is_hidden_layer(i, self.num_layers):
+        if self.use_batchnorm:
+          gamma = self.params['gamma' + str(i)]
+          beta = self.params['beta' + str(i)]
+          bn_p = self.bn_params[i - 1]
 
-        scores, c = affine_bn_relu_forward(scores, W, b, gamma, beta, bn_p)
+          scores, c = affine_bn_relu_forward(scores, W, b, gamma, beta, bn_p)
+        else:
+          scores, c = affine_relu_forward(scores, W, b)
       else:
-        scores, c = affine_relu_forward(scores, W, b)
+        scores, c = affine_forward(scores, W, b)
 
       caches.append(c)
     ############################################################################
@@ -289,18 +293,20 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    loss, dscores = softmax_loss(scores, y)
-
     for i in xrange(self.num_layers, 0, -1):
       c = caches.pop()
 
-      if i < self.num_layers and self.use_batchnorm:
-        dscores, dW, db, dgamma, dbeta = affine_bn_relu_backward(dscores, c)
+      if is_hidden_layer(i, self.num_layers):
+        if self.use_batchnorm:
+          dscores, dW, db, dgamma, dbeta = affine_bn_relu_backward(dscores, c)
 
-        grads['gamma' + str(i)] = dgamma
-        grads['beta' + str(i)] = dbeta
+          grads['gamma' + str(i)] = dgamma
+          grads['beta' + str(i)] = dbeta
+        else:
+          dscores, dW, db = affine_relu_backward(dscores, c)
       else:
-        dscores, dW, db = affine_relu_backward(dscores, c)
+        loss, dscores = softmax_loss(scores, y)
+        dscores, dW, db = affine_backward(dscores, c)
 
       grads['W' + str(i)] = dW + self.reg * self.params['W' + str(i)]
       grads['b' + str(i)] = db
@@ -312,6 +318,13 @@ class FullyConnectedNet(object):
 
     return loss, grads
 
+
+def is_hidden_layer(layer, num_layers):
+  """
+  Convenience function that returns whether the current
+  layer is a hidden layer. If not, then it is the output layer
+  """
+  return layer < num_layers
 
 def affine_bn_relu_forward(x, w, b, gamma, beta, bn_param):
   """
