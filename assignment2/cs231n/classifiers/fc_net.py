@@ -194,6 +194,7 @@ class FullyConnectedNet(object):
 
           self.params['gamma' + str(i)] = gamma
           self.params['beta' + str(i)] = beta
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -258,19 +259,21 @@ class FullyConnectedNet(object):
       W = self.params['W' + str(i)]
       b = self.params['b' + str(i)]
 
+      scores, affine_c = affine_forward(scores, W, b)
+      caches.append(affine_c)
+
       if is_hidden_layer(i, self.num_layers):
         if self.use_batchnorm:
           gamma = self.params['gamma' + str(i)]
           beta = self.params['beta' + str(i)]
           bn_p = self.bn_params[i - 1]
 
-          scores, c = affine_bn_relu_forward(scores, W, b, gamma, beta, bn_p)
-        else:
-          scores, c = affine_relu_forward(scores, W, b)
-      else:
-        scores, c = affine_forward(scores, W, b)
+          scores, batchnorm_c = batchnorm_forward(scores, gamma, beta, bn_p)
+          caches.append(batchnorm_c)
 
-      caches.append(c)
+        scores, relu_cache = relu_forward(scores)
+        caches.append(relu_cache)
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -293,25 +296,25 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    for i in xrange(self.num_layers, 0, -1):
-      c = caches.pop()
+    loss, dscores = softmax_loss(scores, y)
 
+    for i in xrange(self.num_layers, 0, -1):
       if is_hidden_layer(i, self.num_layers):
+        dscores  = relu_backward(dscores, caches.pop())
+
         if self.use_batchnorm:
-          dscores, dW, db, dgamma, dbeta = affine_bn_relu_backward(dscores, c)
+          dscores, dgamma, dbeta = batchnorm_backward_alt(dscores, caches.pop())
 
           grads['gamma' + str(i)] = dgamma
           grads['beta' + str(i)] = dbeta
-        else:
-          dscores, dW, db = affine_relu_backward(dscores, c)
-      else:
-        loss, dscores = softmax_loss(scores, y)
-        dscores, dW, db = affine_backward(dscores, c)
+
+      dscores, dW, db = affine_backward(dscores, caches.pop())
 
       grads['W' + str(i)] = dW + self.reg * self.params['W' + str(i)]
       grads['b' + str(i)] = db
 
       loss += 0.5 * self.reg * np.sum(self.params['W' + str(i)]**2)
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -326,25 +329,3 @@ def is_hidden_layer(layer, num_layers):
   """
   return layer < num_layers
 
-def affine_bn_relu_forward(x, w, b, gamma, beta, bn_param):
-  """
-  Convenience layer that performs an affine transform followed by
-  batch normalization and a ReLU
-  """
-  a, fc_cache = affine_forward(x, w, b)
-  a, bn_cache = batchnorm_forward(a, gamma, beta, bn_param)
-  out, relu_cache = relu_forward(a)
-  cache = (fc_cache, bn_cache, relu_cache)
-
-  return out, cache
-
-def affine_bn_relu_backward(dout, cache):
-  """
-  Backward pass for the affine-batchnorm-relu convenience layer
-  """
-  fc_cache, bn_cache, relu_cache = cache
-  da_norm = relu_backward(dout, relu_cache)
-  da, dgamma, dbeta = batchnorm_backward(da_norm, bn_cache)
-  dx, dw, db = affine_backward(da, fc_cache)
-
-  return dx, dw, db, dgamma, dbeta
