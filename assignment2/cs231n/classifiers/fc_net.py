@@ -274,6 +274,10 @@ class FullyConnectedNet(object):
         scores, relu_cache = relu_forward(scores)
         caches.append(relu_cache)
 
+        if self.use_dropout:
+          scores, dropout_c = dropout_forward(scores, self.dropout_param)
+          caches.append(dropout_c)
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -300,6 +304,9 @@ class FullyConnectedNet(object):
 
     for i in xrange(self.num_layers, 0, -1):
       if is_hidden_layer(i, self.num_layers):
+        if self.use_dropout:
+          dscores = dropout_backward(dscores, caches.pop())
+
         dscores  = relu_backward(dscores, caches.pop())
 
         if self.use_batchnorm:
