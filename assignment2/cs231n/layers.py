@@ -425,7 +425,32 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-  pass
+  N, C, H, W = x.shape
+  F, C, HH, WW = w.shape
+
+  pad = conv_param['pad']
+  stride = conv_param['stride']
+
+  H_prime = 1 + (H + 2 * pad - HH) / stride
+  W_prime = 1 + (W + 2 * pad - WW) / stride
+  out = np.zeros((N, F, H_prime, W_prime))
+
+  for i in xrange(N):
+    x_temp = np.pad(x[i], [(0, 0), (pad, pad), (pad, pad)], 'constant')
+
+    for j in xrange(H_prime):
+      for k in xrange(W_prime):
+        h_start = j * stride
+        h_end = h_start + HH
+
+        w_start = k * stride
+        w_end = w_start + WW
+
+        local_receptive_field = x_temp[:, h_start:h_end, w_start:w_end]
+
+        for f in xrange(F):
+          out[i, f, j, k] = np.sum(local_receptive_field * w[f]) + b[f]
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -450,7 +475,41 @@ def conv_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the convolutional backward pass.                          #
   #############################################################################
-  pass
+  x, w, b, conv_param = cache
+
+  N, C, H, W = x.shape
+  F, C, HH, WW = w.shape
+
+  pad = conv_param['pad']
+  stride = conv_param['stride']
+
+  H_prime, W_prime = dout.shape[-2:]
+
+  dx = np.zeros_like(x)
+  dw = np.zeros_like(w)
+  db = np.zeros_like(b)
+
+  for i in xrange(N):
+    x_temp = np.pad(x[i], [(0, 0), (pad, pad), (pad, pad)], 'constant')
+    dx_temp = np.pad(dx[i], [(0, 0), (pad, pad), (pad, pad)], 'constant')
+
+    for j in xrange(H_prime):
+      for k in xrange(W_prime):
+        h_start = j * stride
+        h_end = h_start + HH
+
+        w_start = k * stride
+        w_end = w_start + WW
+
+        local_receptive_field = x_temp[:, h_start:h_end, w_start:w_end]
+
+        for f in xrange(F):
+          dx_temp[:, h_start:h_end, w_start:w_end] += w[f] * dout[i, f, j, k]
+          dw[f] += local_receptive_field * dout[i, f, j, k]
+          db[f] += dout[i, f, j, k]
+
+    dx[i] = dx_temp[:, 1:-1, 1:-1]
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
