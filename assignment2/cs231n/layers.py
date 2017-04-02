@@ -535,7 +535,31 @@ def max_pool_forward_naive(x, pool_param):
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
-  pass
+  N, C, H, W = x.shape
+
+  pool_height = pool_param['pool_height']
+  pool_width = pool_param['pool_width']
+  stride = pool_param['stride']
+
+  H_prime = 1 + (H - pool_height) / stride
+  W_prime = 1 + (W - pool_width) / stride
+
+  out = np.zeros((N, C, H_prime, W_prime))
+
+  for i in xrange(N):
+    for j in xrange(H_prime):
+      for k in xrange(W_prime):
+        h1 = stride * j
+        h2 = h1 + pool_height
+
+        w1 = stride * k
+        w2 = w1 + pool_width
+
+        pool_window = x[i, :, h1:h2, w1:w2]
+        pool_window = pool_window.reshape((C, -1))
+
+        out[i, :, j, k] = np.amax(pool_window, axis=1)
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -558,7 +582,38 @@ def max_pool_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
-  pass
+  x, pool_param = cache
+
+  N, C, H, W = x.shape
+
+  pool_height = pool_param['pool_height']
+  pool_width = pool_param['pool_width']
+  stride = pool_param['stride']
+
+  H_prime = 1 + (H - pool_height) / stride
+  W_prime = 1 + (W - pool_width) / stride
+
+  dx = np.zeros_like(x)
+
+  for i in xrange(N):
+    for j in xrange(H_prime):
+      for k in xrange(W_prime):
+        h1 = stride * j
+        h2 = h1 + pool_height
+
+        w1 = stride * k
+        w2 = w1 + pool_width
+
+
+        for c in xrange(C):
+          pool_window = x[i, c, h1:h2, w1:w2]
+
+          dpool_window = np.zeros(pool_height * pool_width)
+          dpool_window[np.argmax(pool_window)] = 1
+          dpool_window = dpool_window.reshape((pool_height, pool_width))
+
+          dx[i, c, h1:h2, w1:w2] = dpool_window * dout[i, c, j, k]
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
