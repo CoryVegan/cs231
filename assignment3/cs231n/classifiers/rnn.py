@@ -148,6 +148,9 @@ class CaptioningRNN(object):
     if self.cell_type == 'rnn':
       h, rnn_c = rnn_forward(X, h0, Wx, Wh, b)
 
+    elif self.cell_type == 'lstm':
+      h, lstm_c = lstm_forward(X, h0, Wx, Wh, b)
+
     else:
       raise ValueError('Invalid cell type: {}'.format(self.cell_type))
 
@@ -162,6 +165,9 @@ class CaptioningRNN(object):
 
     if self.cell_type == 'rnn':
       dX, dh0, dWx, dWh, db = rnn_backward(dh, rnn_c)
+
+    else:
+      dX, dh0, dWx, dWh, db = lstm_backward(dh, lstm_c)
 
     dW_embed = word_embedding_backward(dX, word_embed_c)
 
@@ -245,6 +251,7 @@ class CaptioningRNN(object):
     # initialize hidden state & first word
     h, _ = affine_forward(features, W_proj, b_proj)
     curr_word = self._start * np.ones((N, 1), dtype=np.int32)
+    cell = np.zeros_like(h)
 
     for i in xrange(max_length):
       curr_word, _ = word_embedding_forward(curr_word, W_embed)
@@ -252,6 +259,8 @@ class CaptioningRNN(object):
       curr_word = np.squeeze(curr_word)
       if self.cell_type == 'rnn':
         h, _ = rnn_step_forward(curr_word, h, Wx, Wh, b)
+      else:
+        h, cell, _ = lstm_step_forward(curr_word, h, cell, Wx, Wh, b)
 
       h = h[:, np.newaxis, :]
       scores, _ = temporal_affine_forward(h, W_vocab, b_vocab)
