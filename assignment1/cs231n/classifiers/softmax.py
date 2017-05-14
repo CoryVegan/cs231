@@ -79,7 +79,25 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  scores = np.dot(X, W)
+
+  # prevent numerical instability as noted in
+  # http://cs231n/github.io/linear-classify/#softmax
+  scores -= np.max(scores, axis=1, keepdims=True)
+  probs = np.exp(scores) / np.sum(np.exp(scores), axis=1, keepdims=True)
+
+  # smoothing factor to prevent 'Divide by zero in log' error
+  smooth_factor = 1e-14
+  N = X.shape[0]
+  loss = -np.sum(np.log(probs[np.arange(N), y] + smooth_factor)) / N
+
+  # as noted in
+  # http://cs231n.github.io/neural-networks-case-study/#grad
+  dscores = probs.copy()
+  dscores[np.arange(N), y] -= 1
+  dscores /= N
+  dW = np.dot(X.T, dscores)
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
