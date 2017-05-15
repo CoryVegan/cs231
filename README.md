@@ -9,6 +9,9 @@ In the spirit of open education. Simply put, I find that having access to supple
 ### What if I have problems, questions, suggestions, or would like a 2017 version?
 Feel free to submit an issue.
 
+### Where can I find the accompanying lecture videos?
+On [Andrej's youtube channel](https://www.youtube.com/playlist?list=PLkt2uSq6rBVctENoVBg1TpCC7OQi31AlC).
+
 ### Acknowledgements
 Thanks to:
 * Andrej, Justin and the cs231n team for putting together such a great course and making it openly available
