@@ -1,13 +1,6 @@
 # OSX
 .DS_Store
 
-# Lecture materials
-slides/
-videos/
-
-# Course site files
-course_site/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
