@@ -3,7 +3,7 @@ CS231n Winter 2016 Solutions
 
 These are my solutions to Stanford's [CS231n](http://cs231n.stanford.edu/), specifically, the Winter 2016 session.
 
-For those of you going through the course, free to submit an issue if you have problems, questions, suggestions, or would like me to create a 2017 version; I want this repo to help others better understand and work through the course material.
+For those of you going through the course, feel free to submit an issue if you have problems, questions, suggestions, or would like me to create a 2017 version; I want this repo to help others better understand and work through the course material.
 
 Thanks to Andrej, Justin and the CS231n team for not only putting together such a great course but also for making it openly available.
 
